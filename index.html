@@ -1784,12 +1784,26 @@
     function executeResetAppData() {
       triggerHaptic();
       localStorage.removeItem('cyber_pastel_pocket_money_state');
-      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      
+      // 完全な空の新規利用状態にリセット
+      state = {
+        balance: 0,                 // お財布を完全に0円にする
+        baseAllowance: 1500,        // お小遣い設定のデフォルト
+        studyRewardsEnabled: true,
+        studyLogs: {},              // 勉強チェックをすべて消去
+        transactions: [],           // 取引履歴をすべて消去
+        profile: {
+          name: 'Leo',
+          level: 1,                 // レベル1から開始
+          joined: '2026年5月'
+        }
+      };
+
       saveState();
       updateUI();
       closeResetConfirmModal();
       switchTab('dashboard');
-      showToast("データを初期化しました");
+      showToast("お小遣い帳を新しくスタートしました！");
     }
 
     // 自作トースト通知機能
