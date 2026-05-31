@@ -606,6 +606,26 @@
     </div>
   </div>
 
+  <!-- 4. RESET CONFIRM MODAL -->
+  <div id="modal-reset-confirm" class="hidden fixed inset-0 z-50 flex items-center justify-center px-6 pointer-events-none opacity-0 transition-opacity duration-300">
+    <div class="absolute inset-0 bg-background/85 backdrop-blur-sm pointer-events-auto" onclick="closeResetConfirmModal()"></div>
+    <div class="bg-surface border-2 border-danger w-full max-w-xs p-6 rounded-2xl flex flex-col items-center text-center relative z-10 scale-90 transition-transform duration-300 shadow-glow-danger">
+      <div class="w-14 h-14 bg-danger/20 text-danger rounded-full flex items-center justify-center mb-5 shadow-[0_0_30px_rgba(255,66,129,0.5)]">
+        <span class="material-symbols-outlined text-3xl">warning</span>
+      </div>
+      <h2 class="font-display text-lg text-danger font-bold mb-1">データ初期化</h2>
+      <p class="text-xs text-text-main mb-6 leading-relaxed">お小遣い帳の全てのデータと勉強記録を消去して、最初に戻しますか？<br><span class="text-danger font-bold">※この操作は取り消せません。</span></p>
+      <div class="flex gap-3 w-full">
+        <button class="flex-1 py-2 border border-white/10 text-muted font-display text-xs font-bold rounded-lg hover:bg-white/5 transition-colors pointer-events-auto" onclick="closeResetConfirmModal()">
+          キャンセル
+        </button>
+        <button class="flex-1 py-2 bg-danger text-white font-display text-xs font-bold rounded-lg hover:bg-danger/80 transition-colors pointer-events-auto shadow-glow-danger" onclick="executeResetAppData()">
+          初期化する
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 3. COIN DROP ANIMATION SCREEN (STUDY REWARD) -->
   <div id="screen-reward" class="fixed inset-0 z-50 hidden bg-[#0f231e] flex flex-col overflow-hidden select-none">
     <!-- パーティクルCanvas -->
@@ -911,10 +931,16 @@
               <p class="text-muted text-[11px]">${tx.category} • ${tx.date}</p>
             </div>
           </div>
-          <div class="text-right">
-            <p class="font-display font-bold text-base ${tx.type === 'expense' ? 'text-danger' : tx.type === 'income' ? 'text-primary' : 'text-accent'}">
-              ${sign}¥${tx.amount.toLocaleString()}
-            </p>
+          <div class="flex items-center gap-3">
+            <div class="text-right">
+              <p class="font-display font-bold text-base ${tx.type === 'expense' ? 'text-danger' : tx.type === 'income' ? 'text-primary' : 'text-accent'}">
+                ${sign}¥${tx.amount.toLocaleString()}
+              </p>
+            </div>
+            <!-- 個別削除ボタン -->
+            <button class="text-muted hover:text-danger p-1.5 transition-colors relative z-20 flex items-center justify-center rounded hover:bg-white/5" onclick="deleteTransaction('${tx.id}', event)">
+              <span class="material-symbols-outlined text-base">delete</span>
+            </button>
           </div>
         `;
         listContainer.appendChild(item);
@@ -1500,7 +1526,7 @@
     function saveNewTransaction() {
       const amount = parseFloat(addTxAmount);
       if (amount <= 0 || isNaN(amount)) {
-        alert("有効な金額を入力してね！");
+        showToast("有効な金額を入力してね！");
         return;
       }
 
@@ -1721,7 +1747,7 @@
 
       saveState();
       updateUI();
-      alert(`お財布に ¥${state.baseAllowance.toLocaleString()} をチャージしたよ！`);
+      showToast(`お財布に ¥${state.baseAllowance.toLocaleString()} をチャージしたよ！`);
     }
 
     // 勉強リワード機能のON/OFF
@@ -1732,17 +1758,94 @@
       updateUI();
     }
 
-    // アプリデータのリセット
+    // アプリデータのリセットモーダルの表示
     function resetAppData() {
       triggerHaptic();
-      if (confirm("お小遣い帳の全てのデータと勉強記録を消去して、最初に戻す？（この操作は取り消せません）")) {
-        localStorage.removeItem('cyber_pastel_pocket_money_state');
-        state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-        saveState();
-        updateUI();
-        switchTab('dashboard');
-        alert("データをリセットしたよ。");
+      const modal = document.getElementById('modal-reset-confirm');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('pointer-events-none', 'opacity-0');
+        modal.querySelector('div:last-child').classList.remove('scale-90');
+        modal.querySelector('div:last-child').classList.add('scale-100');
+      }, 20);
+    }
+
+    function closeResetConfirmModal() {
+      triggerHaptic();
+      const modal = document.getElementById('modal-reset-confirm');
+      modal.classList.add('pointer-events-none', 'opacity-0');
+      modal.querySelector('div:last-child').classList.add('scale-90');
+      modal.querySelector('div:last-child').classList.remove('scale-100');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    function executeResetAppData() {
+      triggerHaptic();
+      localStorage.removeItem('cyber_pastel_pocket_money_state');
+      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      saveState();
+      updateUI();
+      closeResetConfirmModal();
+      switchTab('dashboard');
+      showToast("データを初期化しました");
+    }
+
+    // 自作トースト通知機能
+    function showToast(message) {
+      // 既存のトーストがあれば削除
+      const oldToast = document.getElementById('app-toast');
+      if (oldToast) oldToast.remove();
+
+      const toast = document.createElement('div');
+      toast.id = 'app-toast';
+      toast.className = "fixed bottom-28 left-1/2 -translate-x-1/2 bg-surface/90 border border-primary text-primary px-5 py-3 rounded-full text-xs font-bold shadow-glow-primary z-50 transition-all duration-300 opacity-0 transform translate-y-2 pointer-events-none backdrop-blur-md";
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-0', 'translate-y-2');
+      }, 50);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      }, 2500);
+    }
+
+    // 個別取引削除機能
+    function deleteTransaction(txId, event) {
+      if (event) event.stopPropagation();
+
+      const tx = state.transactions.find(t => t.id === txId);
+      if (!tx) return;
+
+      // 削除の最終確認ダイアログは不要として、フワッと消すか、カスタム confirm にしたいが、
+      // 子供用アプリとして押し間違い防止のために確認なしで即削除してトースト通知にする
+      triggerHaptic();
+
+      // 残高の元戻し
+      if (tx.type === 'expense') {
+        state.balance += tx.amount;
+      } else {
+        state.balance -= tx.amount;
       }
+
+      // 勉強ごほうびの削除の場合はカレンダーチェックも外す！
+      if (tx.type === 'reward' && tx.id.startsWith('study-reward-')) {
+        const dateStr = tx.id.replace('study-reward-', '');
+        state.studyLogs[dateStr] = false;
+      }
+
+      // 取引を配列から削除
+      state.transactions = state.transactions.filter(t => t.id !== txId);
+
+      saveState();
+      updateUI();
+      showToast(`「${tx.title}」を削除しました`);
     }
 
     // ==================== HELPER UTILITIES ====================
