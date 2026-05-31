@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html class="dark" lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+  <title>Cyber-Pastel Pocket Money - お小遣い帳 & 勉強カレンダー</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+  
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#00F0B5",         // ネオンミント
+            "background": "#0F0F16",      // ディープオブシディアン
+            "surface": "#1A1A24",         // ダークグレー
+            "text-main": "#F4F4F5",
+            "muted": "#828291",
+            "accent": "#B68DFF",          // サイバーパープル
+            "danger": "#FF4281",          // ラジカルピンク
+            "surface-variant": "#2e3732",
+            "primary-container": "#00f0b5",
+            "accent-purple": "#B68DFF",
+            "danger-pink": "#FF4281"
+          },
+          fontFamily: {
+            "display": ["Space Grotesk", "sans-serif"],
+            "body": ["Outfit", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "8px", 
+            "sm": "4px",
+            "md": "8px",
+            "lg": "16px",
+            "xl": "24px", 
+            "full": "9999px"
+          },
+          boxShadow: {
+            'glow-primary': '0 0 16px rgba(0, 240, 181, 0.4)',
+            'glow-accent': '0 0 16px rgba(182, 141, 255, 0.4)',
+            'glow-danger': '0 0 16px rgba(255, 66, 129, 0.4)',
+          }
+        },
+      },
+    }
+  </script>
+  
+  <style>
+    /* Tailwind CSSがロードされる前、あるいはブロックされた場合でも、
+       画面全体の透明モーダルや別画面の重なりを防ぐための確実なフォールバック */
+    .hidden {
+      display: none !important;
+    }
+    .pointer-events-none {
+      pointer-events: none !important;
+    }
+    .pointer-events-auto {
+      pointer-events: auto !important;
+    }
+    .opacity-0 {
+      opacity: 0 !important;
+    }
+    .fixed {
+      position: fixed !important;
+    }
+    .inset-0 {
+      top: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      left: 0 !important;
+    }
+    .z-50 {
+      z-index: 50 !important;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: #0F0F16;
+      color: #F4F4F5;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+      min-height: 100dvh;
+    }
+    h1, h2, h3, .font-display {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    
+    /* スムーズスクロールとカスタムスクロールバー */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0F0F16; 
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1A1A24; 
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #828291; 
+    }
+    
+    .glass-card {
+      background: rgba(26, 26, 36, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .glass-nav {
+      background: rgba(26, 26, 36, 0.9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-t: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* テンキーボタンアクティブエフェクト */
+    .numpad-btn:active {
+      transform: scale(0.95);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+    
+    /* 勉強ログボタンのグローアニメーション */
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 15px rgba(182, 141, 255, 0.4); transform: scale(1); }
+      50% { box-shadow: 0 0 30px rgba(182, 141, 255, 0.8); transform: scale(1.02); }
+    }
+    .animate-pulse-glow {
+      animation: pulse-glow 2s infinite ease-in-out;
+    }
+
+    /* ドーナツグラフの回転とアニメーション */
+    @keyframes sweep {
+      from { stroke-dashoffset: 800; }
+      to { stroke-dashoffset: var(--dash-offset, 0); }
+    }
+    .animate-sweep {
+      animation: sweep 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    
+    .donut-segment {
+      stroke-dasharray: 754;
+      stroke-dashoffset: 754;
+      transform-origin: center;
+      transition: stroke-width 0.3s, filter 0.3s;
+    }
+    .donut-segment:hover {
+      stroke-width: 38;
+      filter: brightness(1.2);
+    }
+
+    /* カテゴリーバーのアニメーション */
+    @keyframes fillBar {
+      from { width: 0; }
+    }
+    .animate-fill {
+      animation: fillBar 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    /* ご褒美コイン画面のフェードイン */
+    @keyframes fade-in-up {
+      0% { opacity: 0; transform: translate(-50%, 20px); }
+      100% { opacity: 1; transform: translate(-50%, 0); }
+    }
+    .btn-animate {
+      animation: fade-in-up 0.8s ease-out 1.2s both;
+    }
+
+    /* スライドアップモーダルの表示 */
+    .slide-up {
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .slide-up.active {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body class="bg-background text-text-main flex flex-col min-h-screen relative overflow-x-hidden pb-24">
+
+  <!-- ==================== MAIN CONTENTS ==================== -->
+  <main class="flex-1 flex flex-col w-full max-w-md mx-auto px-4 pt-4">
+
+    <!-- 1. DASHBOARD VIEW -->
+    <div id="view-dashboard" class="flex-1 flex flex-col space-y-6">
+      <!-- ヘッダー（資産残高） -->
+      <header class="pt-8 pb-4 flex flex-col items-center justify-center relative">
+        <p class="text-muted text-xs tracking-widest uppercase mb-1 font-display">WALLET BALANCE / 総資産</p>
+        <h1 id="db-balance" class="text-primary text-5xl font-display font-bold tracking-tight drop-shadow-[0_0_12px_rgba(0,240,181,0.5)]">¥4,250</h1>
+        <!-- ミニ装飾 -->
+        <div class="absolute top-2 right-2 flex gap-2">
+          <div class="w-2 h-2 rounded-full bg-primary shadow-glow-primary animate-pulse"></div>
+          <div class="w-2 h-2 rounded-full bg-surface"></div>
+        </div>
+      </header>
+
+      <!-- 勉強リワード機能有効時のみ表示するウィジェット -->
+      <div id="db-study-widgets" class="space-y-4">
+        <!-- 継続日数ウィジェット -->
+        <section>
+          <div class="bg-surface/40 border border-primary/20 rounded-md p-3.5 flex items-center justify-center gap-3 backdrop-blur-sm">
+            <span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+            <p class="font-display font-bold text-sm tracking-wide">勉強がんばり継続: <span id="db-streak" class="text-primary">4日連続</span></p>
+          </div>
+        </section>
+
+        <!-- 今日の勉強リワード促進カード -->
+        <section id="db-reward-card">
+          <div class="bg-surface border border-accent/30 rounded-lg p-5 flex flex-col gap-4 backdrop-blur-md relative overflow-hidden shadow-glow-accent">
+            <div class="absolute -right-10 -top-10 w-32 h-32 bg-accent/10 rounded-full blur-2xl"></div>
+            <div class="flex items-center justify-between relative z-10">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent">
+                  <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">school</span>
+                </div>
+                <div>
+                  <h2 class="font-display font-bold text-base leading-tight">今日の勉強ミッション</h2>
+                  <p id="db-reward-status" class="text-muted text-xs">今日のインセンティブが獲得可能です</p>
+                </div>
+              </div>
+            </div>
+            <button id="btn-db-study-log" class="w-full bg-accent/10 border border-accent hover:bg-accent/20 transition-all text-accent font-display font-bold tracking-widest py-3 rounded-md shadow-glow-accent relative z-10 flex items-center justify-center gap-2" onclick="handleDbStudyLogClick()">
+              <span class="material-symbols-outlined text-sm">bolt</span>
+              今日の勉強を記録して +10円
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <!-- 最近の履歴リスト -->
+      <section class="flex-1 flex flex-col pt-2">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-display font-bold text-base">最近のしゅっぴ・しゅうにゅう</h3>
+          <button class="text-muted text-xs hover:text-text-main transition-colors" onclick="switchTab('stats')">グラフで見る</button>
+        </div>
+        <div id="db-transaction-list" class="flex flex-col gap-3 pb-8">
+          <!-- JSで動的に追加されます -->
+        </div>
+      </section>
+    </div>
+
+    <!-- 2. CALENDAR VIEW -->
+    <div id="view-calendar" class="hidden flex-1 flex flex-col space-y-6">
+      <!-- ヘッダー -->
+      <header class="bg-surface/80 backdrop-blur-xl border-b border-white/5 fixed top-0 left-0 w-full z-40 flex justify-between items-center px-6 h-16 max-w-md mx-auto right-0">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">edit_calendar</span>
+        </div>
+        <h1 class="font-display text-lg font-bold tracking-tight text-primary drop-shadow-[0_0_8px_rgba(0,240,181,0.5)]">勉強カレンダー</h1>
+        <div class="flex items-center">
+          <span class="material-symbols-outlined text-muted hover:text-primary transition-colors cursor-pointer" onclick="alert('通知機能は現在シミュレーションモードです。')">notifications</span>
+        </div>
+      </header>
+
+      <!-- 月の選択 & ナビゲーション -->
+      <section class="pt-16 flex justify-between items-center">
+        <div>
+          <h2 id="cal-month-title" class="font-display font-bold text-xl text-text-main">OCTOBER 2024 / 10月</h2>
+          <p class="font-display text-[10px] tracking-wider text-primary font-semibold uppercase">INCENTIVE PROTOCOL ACTIVE / ごほうび機能稼働中</p>
+        </div>
+        <div class="flex gap-2">
+          <button class="w-9 h-9 rounded-lg flex items-center justify-center border border-white/10 hover:border-primary/50 transition-colors" onclick="changeMonth(-1)">
+            <span class="material-symbols-outlined text-sm">chevron_left</span>
+          </button>
+          <button class="w-9 h-9 rounded-lg flex items-center justify-center border border-white/10 hover:border-primary/50 transition-colors" onclick="changeMonth(1)">
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- カレンダーカード -->
+      <section class="glass-card rounded-xl p-4">
+        <!-- 曜日ヘッダー -->
+        <div class="grid grid-cols-7 gap-2 mb-3 text-center">
+          <div class="font-display font-bold text-rose-500 text-xs">日</div>
+          <div class="font-display font-bold text-muted text-xs">月</div>
+          <div class="font-display font-bold text-muted text-xs">火</div>
+          <div class="font-display font-bold text-muted text-xs">水</div>
+          <div class="font-display font-bold text-muted text-xs">木</div>
+          <div class="font-display font-bold text-muted text-xs">金</div>
+          <div class="font-display font-bold text-cyan-400 text-xs">土</div>
+        </div>
+        
+        <!-- 日付セルグリッド (JSで動的生成) -->
+        <div id="cal-grid" class="grid grid-cols-7 gap-2">
+          <!-- JSで日付セルが挿入されます -->
+        </div>
+
+        <!-- 凡例 -->
+        <div class="flex gap-4 mt-5 border-t border-white/5 pt-3">
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,240,181,0.5)]"></div>
+            <span class="text-[10px] text-muted">勉強した日</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-accent-purple shadow-[0_0_8px_rgba(182,141,255,0.5)]"></div>
+            <span class="text-[10px] text-muted">今日</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- がんばり集計 -->
+      <section class="grid grid-cols-2 gap-4">
+        <div class="bg-surface border border-white/5 p-4 rounded-xl">
+          <p class="text-[10px] tracking-wider text-muted font-bold uppercase mb-1">STREAK / 継続日数</p>
+          <div class="flex items-baseline gap-1.5">
+            <span id="cal-streak" class="font-display font-bold text-3xl text-accent-purple">5</span>
+            <span class="text-[10px] text-muted font-bold">日連続</span>
+          </div>
+        </div>
+        <div class="bg-surface border border-white/5 p-4 rounded-xl">
+          <p class="text-[10px] tracking-wider text-muted font-bold uppercase mb-1">EARNED / 獲得ごほうび</p>
+          <div class="flex items-baseline gap-1.5">
+            <span id="cal-earned" class="font-display font-bold text-3xl text-primary">¥120</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 今日の勉強をログするボタン -->
+      <div class="pt-2">
+        <button id="btn-today-log" class="w-full h-14 bg-accent-purple rounded-xl flex items-center justify-center gap-2.5 animate-pulse-glow group transition-transform active:scale-95" onclick="triggerTodayStudyLog()">
+          <span class="material-symbols-outlined text-white text-xl" style="font-variation-settings: 'FILL' 1;">edit_calendar</span>
+          <span class="font-display text-white font-bold tracking-wider text-sm">今日の勉強を記録する (+10円)</span>
+        </button>
+      </div>
+
+      <!-- がんばり目標カード -->
+      <div class="relative bg-surface border border-white/5 p-4 rounded-xl overflow-hidden">
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl"></div>
+        <h3 class="font-display font-bold text-sm text-text-main relative z-10">今週のがんばり目標</h3>
+        <p class="text-xs text-muted mt-1 leading-relaxed relative z-10">7日間れんぞくで勉強を記録すると、「ものしり」バッジと50円の特別ボーナスがもらえるよ！</p>
+      </div>
+    </div>
+
+    <!-- 3. ANALYTICS (STATS) VIEW -->
+    <div id="view-stats" class="hidden flex-1 flex flex-col space-y-6">
+      <!-- 月選択ヘッダー -->
+      <div class="flex items-center bg-background p-2 justify-between sticky top-0 z-10 glass-card rounded-xl">
+        <button aria-label="先月" class="text-text-main flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-surface transition-colors" onclick="changeStatsMonth(-1)">
+          <span class="material-symbols-outlined text-sm">chevron_left</span>
+        </button>
+        <h2 id="stats-month-title" class="text-text-main text-base font-bold tracking-widest flex-1 text-center font-display uppercase">SEPTEMBER / 9月</h2>
+        <button aria-label="来月" class="flex w-10 items-center justify-center text-text-main hover:bg-surface rounded-full transition-colors size-10" onclick="changeStatsMonth(1)">
+          <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </button>
+      </div>
+
+      <!-- チャートセクション -->
+      <div class="relative w-[280px] h-[280px] mx-auto mb-4 flex items-center justify-center">
+        <!-- SVGドーナツチャート -->
+        <svg class="w-full h-full transform -rotate-90 drop-shadow-[0_0_15px_rgba(182,141,255,0.15)]" viewBox="0 0 300 300">
+          <!-- 背景枠 -->
+          <circle class="opacity-30" cx="150" cy="150" fill="transparent" r="120" stroke="#1A1A24" stroke-width="26"></circle>
+          <!-- 動的セグメントがJSで挿入されます -->
+          <g id="donut-segments-container"></g>
+        </svg>
+        
+        <!-- 中央のテキスト -->
+        <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+          <span class="text-muted text-xs tracking-wider uppercase mb-1">つかったお金</span>
+          <span id="stats-total-spent" class="font-display font-bold text-3xl text-text-main">¥1,450</span>
+        </div>
+      </div>
+
+      <!-- カテゴリー詳細リスト -->
+      <div class="w-full flex-1 flex flex-col pt-2">
+        <h3 class="font-display font-bold text-base mb-3">カテゴリーべつ内訳</h3>
+        <div id="stats-category-list" class="space-y-4 pb-8">
+          <!-- JSで動的に追加されます -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. SETTINGS VIEW -->
+    <div id="view-settings" class="hidden flex-1 flex flex-col space-y-6">
+      <header class="flex items-center justify-between pb-2">
+        <div class="w-10"></div>
+        <h1 class="text-base font-display font-bold text-text-main tracking-wide uppercase">しってい / 設定</h1>
+        <button class="flex items-center justify-center w-10 h-10 rounded-full bg-surface text-accent hover:bg-surface/80 transition-colors border border-accent/30 shadow-glow-accent" onclick="alert('マルチプロファイル機能は開発中です！')">
+          <span class="material-symbols-outlined text-lg">swap_horiz</span>
+        </button>
+      </header>
+
+      <!-- プロフィール -->
+      <section class="flex flex-col items-center justify-center space-y-3 pt-2 pb-4">
+        <div class="relative">
+          <div class="w-24 h-24 rounded-lg bg-surface border-2 border-primary shadow-glow-primary flex items-center justify-center overflow-hidden relative group">
+            <!-- 幾何学アバター -->
+            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzBGMEYxNiIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzFBMUEyNCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZykiLz48cGF0aCBkPSJNMTAgMTBoODB2ODBoLTgweiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDZlYWIxIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9IjAuNSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjMwIiBmaWxsPSJub25lIiBzdHJva2U9IiNCNjhERkYiIHN0cm9rZS13aWR0aD0iMiIgb3BhY2l0eT0iMC44Ii8+PHBvbHlnb24gcG9pbnRzPSI1MCwyMCA4MCw4MCAyMCw4MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkY0MjgxIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9IjAuNiIvPjwvc3ZnPg==')] bg-cover bg-center"></div>
+          </div>
+          <div class="absolute -bottom-2 -right-2 bg-accent text-background text-[9px] font-display font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider shadow-glow-accent">
+            Lvl 3
+          </div>
+        </div>
+        <div class="flex items-center gap-1 bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-full cursor-pointer hover:bg-accent/20 transition-all" onclick="alert('レオのアカウントへ切り替えます（シミュレーション）')">
+          <span class="material-symbols-outlined text-xs text-accent">sync</span>
+          <span class="text-[9px] font-display font-bold text-accent uppercase tracking-tighter">レオに切り替える</span>
+        </div>
+        <div class="text-center">
+          <h2 id="settings-username" class="text-lg font-display font-bold text-text-main tracking-tight">@NeonHacker99</h2>
+          <p id="settings-joined" class="text-xs text-muted">2026年5月から開始</p>
+        </div>
+      </section>
+
+      <!-- お小遣い設定カード -->
+      <section class="glass-card rounded-lg p-5 space-y-4">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="material-symbols-outlined text-primary text-xl">account_balance_wallet</span>
+          <h3 class="text-sm font-display font-semibold text-text-main uppercase tracking-wide">お小遣い設定 (毎月)</h3>
+        </div>
+        <div class="space-y-2">
+          <label class="block text-xs font-body text-muted" for="allowance-input">毎月の基本お小遣い額 (¥)</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <span class="text-muted font-display font-bold text-base">¥</span>
+            </div>
+            <input class="w-full bg-background border border-surface text-text-main text-lg font-display font-bold rounded-md pl-9 pr-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary focus:shadow-glow-primary transition-all" id="allowance-input" type="number" value="1500" onchange="handleAllowanceChange(this.value)">
+          </div>
+          <div class="flex justify-between items-center pt-2">
+            <p class="text-[10px] text-muted">毎月1日に自動的にお財布に入ります。</p>
+            <button class="bg-primary/10 border border-primary/40 hover:bg-primary/20 text-primary text-[10px] font-bold px-3 py-1.5 rounded transition-all" onclick="manuallyTriggerAllowance()">
+              今すぐお小遣いをチャージ
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 機能のオンオフカード -->
+      <section class="glass-card rounded-lg p-5 space-y-4">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="material-symbols-outlined text-accent text-xl">school</span>
+          <h3 class="text-sm font-display font-semibold text-text-main uppercase tracking-wide">ミッション機能</h3>
+        </div>
+        <!-- 勉強インセンティブ機能トグル -->
+        <div class="flex items-center justify-between">
+          <div class="pr-4">
+            <p class="text-sm font-medium text-text-main">毎日の勉強インセンティブ</p>
+            <p class="text-[11px] text-muted mt-0.5 leading-snug">勉強を記録すると、毎日10円のごほうびがもらえます。チェックで自動的にお財布と連動します。</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer shrink-0">
+            <input id="toggle-study-reward" checked class="sr-only peer" type="checkbox" onchange="handleStudyRewardToggle(this.checked)">
+            <div class="w-11 h-6 bg-background border border-white/10 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-text-main after:rounded-full after:h-4.5 after:w-4.5 after:transition-all"></div>
+          </label>
+        </div>
+      </section>
+
+      <!-- システム設定 -->
+      <section class="glass-card rounded-lg p-5 space-y-3">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="material-symbols-outlined text-muted text-xl">settings_system_daydream</span>
+          <h3 class="text-sm font-display font-semibold text-text-main uppercase tracking-wide">システム</h3>
+        </div>
+        <button class="w-full flex items-center justify-between py-2 text-left group" onclick="alert('通知設定は現在シミュレーションです')">
+          <div class="flex items-center gap-3 text-sm">
+            <span class="material-symbols-outlined text-muted group-hover:text-text-main transition-colors">notifications_active</span>
+            <span class="text-text-main">通知を設定する</span>
+          </div>
+          <span class="material-symbols-outlined text-muted text-sm">chevron_right</span>
+        </button>
+        <button class="w-full flex items-center justify-between py-2 text-left group" onclick="alert('テーマは「ネオン・ダーク」で固定されています')">
+          <div class="flex items-center gap-3 text-sm">
+            <span class="material-symbols-outlined text-muted group-hover:text-text-main transition-colors">palette</span>
+            <span class="text-text-main">きせかえテーマ</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-xs font-display text-primary uppercase tracking-wider">Neon Dark</span>
+            <span class="material-symbols-outlined text-muted text-sm">chevron_right</span>
+          </div>
+        </button>
+        <div class="pt-4 border-t border-white/5">
+          <button class="w-full flex items-center justify-center gap-2 py-3 rounded-md bg-danger/10 text-danger hover:bg-danger/20 hover:shadow-glow-danger transition-all font-display font-semibold text-xs uppercase tracking-wide" onclick="resetAppData()">
+            <span class="material-symbols-outlined text-base">delete_forever</span>
+            アプリデータを初期化する
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- ==================== FIXED BOTTOM NAVIGATION ==================== -->
+    <nav class="fixed bottom-0 left-0 w-full z-45 glass-nav border-t border-white/10 px-4 pb-6 pt-3 shadow-[0_-10px_30px_rgba(15,15,22,0.8)]">
+      <div class="flex gap-2 max-w-md mx-auto">
+        <!-- Dashboard Tab -->
+        <a id="nav-dashboard" class="flex flex-1 flex-col items-center justify-center gap-1 text-primary drop-shadow-[0_0_8px_rgba(0,240,181,0.4)]" href="#" onclick="switchTab('dashboard')">
+          <div class="flex h-8 items-center justify-center">
+            <span id="icon-dashboard" class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">home</span>
+          </div>
+        </a>
+        <!-- Calendar Tab -->
+        <a id="nav-calendar" class="flex flex-1 flex-col items-center justify-center gap-1 text-muted hover:text-text-main transition-colors" href="#" onclick="switchTab('calendar')">
+          <div class="flex h-8 items-center justify-center">
+            <span id="icon-calendar" class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 0;">calendar_today</span>
+          </div>
+        </a>
+        <!-- Stats Tab -->
+        <a id="nav-stats" class="flex flex-1 flex-col items-center justify-center gap-1 text-muted hover:text-text-main transition-colors" href="#" onclick="switchTab('stats')">
+          <div class="flex h-8 items-center justify-center">
+            <span id="icon-stats" class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 0;">pie_chart</span>
+          </div>
+        </a>
+        <!-- Settings Tab -->
+        <a id="nav-settings" class="flex flex-1 flex-col items-center justify-center gap-1 text-muted hover:text-text-main transition-colors" href="#" onclick="switchTab('settings')">
+          <div class="flex h-8 items-center justify-center">
+            <span id="icon-settings" class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 0;">settings</span>
+          </div>
+        </a>
+      </div>
+    </nav>
+
+    <!-- FLOATING ACTION BUTTON (取引追加用) -->
+    <button id="btn-fab" class="fixed bottom-[92px] right-6 w-14 h-14 bg-primary text-background rounded-full flex items-center justify-center shadow-glow-primary z-40 hover:scale-105 active:scale-95 transition-transform" onclick="openAddTransactionModal()">
+      <span class="material-symbols-outlined text-3xl font-bold">add</span>
+    </button>
+  </main>
+
+  <!-- ==================== OVERLAYS & MODALS ==================== -->
+
+  <!-- 1. ADD TRANSACTION MODAL -->
+  <div id="modal-add-transaction" class="hidden fixed inset-0 z-50 pointer-events-none opacity-0 transition-opacity duration-300 flex flex-col justify-end">
+    <!-- 背景オーバーレイ -->
+    <div class="absolute inset-0 bg-background/85 backdrop-blur-sm pointer-events-auto" onclick="closeAddTransactionModal()"></div>
+    
+    <!-- スライドアップコンテンツ -->
+    <div id="add-tx-slide-container" class="slide-up w-full max-w-md mx-auto bg-surface/95 backdrop-blur-xl border-t border-white/10 rounded-t-3xl p-5 flex flex-col gap-5 pointer-events-auto z-10 relative">
+      <!-- ヘッダー -->
+      <header class="flex items-center justify-between shrink-0">
+        <button class="size-9 flex items-center justify-center rounded-full bg-white/5 text-text-main hover:bg-white/10" onclick="closeAddTransactionModal()">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+        <h2 class="text-sm font-display font-bold tracking-wider uppercase">NEW RECORD / 新しいきろく</h2>
+        <div class="size-9"></div>
+      </header>
+
+      <!-- 支出/収入トグル -->
+      <div class="flex justify-center shrink-0">
+        <div class="flex p-1 bg-background rounded-full w-full max-w-[280px] relative border border-white/5">
+          <label class="flex-1 text-center cursor-pointer relative z-10">
+            <input checked class="peer sr-only" name="txType" onchange="updateAddTxColors()" type="radio" value="expense">
+            <div class="py-2 text-xs font-display font-bold uppercase tracking-wider rounded-full transition-colors peer-checked:text-white text-muted">つかった (支出)</div>
+          </label>
+          <label class="flex-1 text-center cursor-pointer relative z-10">
+            <input class="peer sr-only" name="txType" onchange="updateAddTxColors()" type="radio" value="income">
+            <div class="py-2 text-xs font-display font-bold uppercase tracking-wider rounded-full transition-colors peer-checked:text-background text-muted">もらった (収入)</div>
+          </label>
+          <!-- アクティブ背景インジケーター -->
+          <div id="toggle-indicator" class="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-danger rounded-full transition-all duration-300 left-1 shadow-glow-danger"></div>
+        </div>
+      </div>
+
+      <!-- 金額表示 -->
+      <div class="flex flex-col items-center justify-center min-h-[90px]">
+        <div class="flex items-baseline gap-1 relative">
+          <span id="add-tx-currency-symbol" class="text-2xl font-display text-danger transition-colors duration-300">¥</span>
+          <span id="add-tx-amount-display" class="text-[52px] leading-none font-display font-bold text-danger transition-colors duration-300 tracking-tighter shadow-sm">0</span>
+        </div>
+      </div>
+
+      <!-- カテゴリースライダー -->
+      <div class="shrink-0">
+        <p class="text-[10px] text-muted uppercase font-bold tracking-wider mb-2">CATEGORY / カテゴリー</p>
+        <div id="category-container" class="flex gap-2 overflow-x-auto no-scrollbar pb-1 px-1">
+          <!-- JSでトグル値に応じて動的に生成されます -->
+        </div>
+      </div>
+
+      <!-- テンキー & 保存 -->
+      <div class="flex flex-col gap-5 pt-2">
+        <div class="grid grid-cols-3 gap-2 w-full max-w-xs mx-auto h-[200px]">
+          <button class="numpad-btn font-display text-xl font-bold text-text-main rounded-xl flex items-center justify-center bg-white/5 transition-transform" onclick="appendAddTxNumber('1')">1</button>
+          <button class="numpad-btn font-display text-xl font-bold text-text-main rounded-xl flex items-center justify-center bg-white/5 transition-transform" onclick="appendAddTxNumber('2')">2</button>
+          <button class="numpad-btn font-display text-xl font-bold text-text-main rounded-xl flex items-center justify-center bg-white/5 transition-transform" onclick="appendAddTxNumber('3')">3</button>
+          <button class="numpad-btn font-display text-xl font-bold text-text-main rounded-xl flex items-center justify-center bg-white/5 transition-transform" onclick="appendAddTxNumber('4')">4</button>
+          <button class="numpad-btn font-display text-xl font-bold text-text-main rounded-xl flex items-center justify-center bg-white/5 transition-transform" onclick="appendAddTxNumber('5')">5</button>
+          <button class="numpad-btn font-display text-xl font-bold text-text-main rounded-xl flex items-center justify-center bg-white/5 transition-transform" onclick="appendAddTxNumber('6')">6</button>
+          <button class="numpad-btn font-display text-xl font-bold text-text-main rounded-xl flex items-center justify-center bg-white/5 transition-transform" onclick="appendAddTxNumber('7')">7</button>
+          <button class="numpad-btn font-display text-xl font-bold text-text-main rounded-xl flex items-center justify-center bg-white/5 transition-transform" onclick="appendAddTxNumber('8')">8</button>
+          <button class="numpad-btn font-display text-xl font-bold text-text-main rounded-xl flex items-center justify-center bg-white/5 transition-transform" onclick="appendAddTxNumber('9')">9</button>
+          <button class="numpad-btn font-display text-xl font-bold text-text-main rounded-xl flex items-center justify-center bg-white/5 transition-transform" onclick="appendAddTxNumber('.')">.</button>
+          <button class="numpad-btn font-display text-xl font-bold text-text-main rounded-xl flex items-center justify-center bg-white/5 transition-transform" onclick="appendAddTxNumber('0')">0</button>
+          <button class="numpad-btn text-text-main rounded-xl flex items-center justify-center bg-white/5 transition-transform" onclick="backspaceAddTx()">
+            <span class="material-symbols-outlined text-sm">backspace</span>
+          </button>
+        </div>
+
+        <button id="btn-save-tx" class="w-full h-13 rounded-full bg-danger text-white font-display font-bold tracking-widest uppercase shadow-glow-danger transition-all duration-300 text-sm" onclick="saveNewTransaction()">
+          きろくを保存する
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. VERIFIED SUCCESS MODAL -->
+  <div id="modal-success" class="hidden fixed inset-0 z-50 flex items-center justify-center px-6 pointer-events-none opacity-0 transition-opacity duration-300">
+    <div class="absolute inset-0 bg-background/85 backdrop-blur-sm pointer-events-auto"></div>
+    <div class="bg-surface border-2 border-primary w-full max-w-xs p-6 rounded-2xl flex flex-col items-center text-center relative z-10 scale-90 transition-transform duration-300 shadow-glow-primary">
+      <div class="w-16 h-16 bg-primary/20 text-primary rounded-full flex items-center justify-center mb-5 shadow-[0_0_30px_rgba(0,240,181,0.5)]">
+        <span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+      </div>
+      <h2 class="font-display text-xl text-primary font-bold mb-1">VERIFIED / 確認完了</h2>
+      <p class="text-xs text-text-main mb-6 leading-relaxed">今日の勉強を確認しました！<br>ごほうびとして10円をお財布にチャージしたよ！</p>
+      <button class="w-full py-3 border border-primary text-primary font-display text-xs font-bold rounded-lg hover:bg-primary/10 transition-colors pointer-events-auto" onclick="closeSuccessModalAndShowReward()">
+        つぎへ (ごほうび演出)
+      </button>
+    </div>
+  </div>
+
+  <!-- 3. COIN DROP ANIMATION SCREEN (STUDY REWARD) -->
+  <div id="screen-reward" class="fixed inset-0 z-50 hidden bg-[#0f231e] flex flex-col overflow-hidden select-none">
+    <!-- パーティクルCanvas -->
+    <canvas id="reward-canvas" class="absolute inset-0 z-0 w-full h-full pointer-events-none"></canvas>
+    
+    <!-- コンテンツレイヤー -->
+    <div class="relative z-10 flex-1 flex flex-col justify-between items-center py-16 px-6">
+      <div class="text-center mt-6">
+        <h1 class="text-[44px] font-display font-bold text-accent tracking-wide leading-none select-none" style="text-shadow: 0 0 10px rgba(182, 141, 255, 0.5), 0 0 25px rgba(182, 141, 255, 0.3);">
+          CLAIMED +¥10
+        </h1>
+        <p class="text-[15px] font-display font-bold text-primary tracking-widest uppercase mt-3 select-none">
+          勉強ミッション報酬ゲット！
+        </p>
+        <p id="reward-streak-sub" class="text-xs text-muted font-bold mt-1 select-none">
+          勉強がんばり継続: 4日間
+        </p>
+      </div>
+
+      <!-- カレンダーに戻るボタン -->
+      <button class="btn-animate flex items-center justify-center gap-2 bg-background/80 backdrop-blur-md border border-primary text-primary px-8 py-3.5 rounded-lg font-display font-bold uppercase tracking-[0.1em] text-xs shadow-glow-primary hover:bg-primary hover:text-background hover:shadow-[0_0_20px_rgba(0,240,181,0.6)] active:scale-95 transition-all duration-300" onclick="closeRewardScreen()">
+        カレンダーにもどる
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== CORE APPLICATION LOGIC ==================== -->
+  <script>
+    // デバッグ用エラー監視
+    window.onerror = function(message, source, lineno, colno, error) {
+      const errDiv = document.createElement('div');
+      errDiv.style.position = 'fixed';
+      errDiv.style.top = '0';
+      errDiv.style.left = '0';
+      errDiv.style.width = '100%';
+      errDiv.style.background = '#FF4281';
+      errDiv.style.color = '#white';
+      errDiv.style.padding = '15px';
+      errDiv.style.zIndex = '999999';
+      errDiv.style.fontSize = '12px';
+      errDiv.style.fontFamily = 'monospace';
+      errDiv.style.whiteSpace = 'pre-wrap';
+      errDiv.innerHTML = `<strong>[JS Error Detected]</strong><br>${message}<br>at ${source}:${lineno}:${colno}`;
+      document.body.appendChild(errDiv);
+      return false;
+    };
+
+    // ==================== STATE MANAGEMENT ====================
+    
+    // アプリのデフォルトデータ
+    const DEFAULT_STATE = {
+      balance: 4250,
+      baseAllowance: 1500,
+      studyRewardsEnabled: true,
+      studyLogs: {
+        // Stitchデザインの初期チェック状態（10月とする）
+        "2024-10-01": true,
+        "2024-10-02": true,
+        "2024-10-04": true,
+        "2024-10-05": true,
+        "2024-10-09": true,
+      },
+      transactions: [
+        {
+          id: 'tx-1',
+          type: 'expense',
+          category: 'たべもの',
+          icon: 'fastfood',
+          title: 'サイバーヌードル',
+          amount: 850,
+          date: '今日, 14:32',
+          timestamp: Date.now() - 1000 * 60 * 30 // 30分前
+        },
+        {
+          id: 'tx-2',
+          type: 'income',
+          category: 'お小遣い',
+          icon: 'payments',
+          title: '今月のお小遣いチャージ',
+          amount: 2000,
+          date: '昨日',
+          timestamp: Date.now() - 1000 * 60 * 60 * 24 // 1日前
+        },
+        {
+          id: 'tx-3',
+          type: 'expense',
+          category: 'ゲーム',
+          icon: 'sports_esports',
+          title: 'ネオンランナー DLC',
+          amount: 1200,
+          date: '9月28日',
+          timestamp: new Date('2024-09-28T12:00:00').getTime()
+        },
+        {
+          id: 'tx-4',
+          type: 'reward',
+          category: '勉強ごほうび',
+          icon: 'school',
+          title: '勉強ミッション報酬 (9/28)',
+          amount: 10,
+          date: '9月28日',
+          timestamp: new Date('2024-09-28T18:00:00').getTime()
+        }
+      ],
+      profile: {
+        name: 'NeonHacker99',
+        level: 3,
+        joined: '2026年5月'
+      }
+    };
+
+    let state = {};
+
+    // 状態をlocalStorageからロード、または初期化
+    function loadState() {
+      const stored = localStorage.getItem('cyber_pastel_pocket_money_state');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          
+          // 古いデータの構造チェック＆デフォルト値での安全なマージ
+          state = Object.assign({}, DEFAULT_STATE, parsed);
+          
+          // 内部オブジェクトや配列の破損に対する安全ガード
+          if (!state.studyLogs || typeof state.studyLogs !== 'object') {
+            state.studyLogs = Object.assign({}, DEFAULT_STATE.studyLogs);
+          }
+          if (!Array.isArray(state.transactions)) {
+            state.transactions = [...DEFAULT_STATE.transactions];
+          }
+          if (!state.profile || typeof state.profile !== 'object') {
+            state.profile = Object.assign({}, DEFAULT_STATE.profile);
+          }
+          if (typeof state.balance !== 'number') {
+            state.balance = DEFAULT_STATE.balance;
+          }
+          if (typeof state.baseAllowance !== 'number') {
+            state.baseAllowance = DEFAULT_STATE.baseAllowance;
+          }
+        } catch (e) {
+          console.error("Failed to parse stored state, resetting.", e);
+          state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+          saveState();
+        }
+      } else {
+        state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        saveState();
+      }
+    }
+
+    // 状態をlocalStorageに保存
+    function saveState() {
+      localStorage.setItem('cyber_pastel_pocket_money_state', JSON.stringify(state));
+    }
+
+    // ==================== APP INITIALIZATION ====================
+
+    // 現在のカレンダー表示年月 (Stitch初期値は 2024-10 とする)
+    let currentYear = 2024;
+    let currentMonth = 9; // 0-indexed (9 = 10月)
+
+    // 分析表示の年月
+    let statsYear = 2024;
+    let statsMonth = 8; // 0-indexed (8 = 9月)
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      
+      // 今日の日付が2024年10月の想定で初期シミュレーション値をセット
+      // (本物の現在日付に合わせるか、Stitchデザインの再現のために2024-10とする)
+      const now = new Date();
+      // 今日の日付は 2024-10-10 とする (Stitchカレンダーで10日をアクティブにするため)
+      // ただしユーザー自身の日付計算と整合性を取るため、2024-10-10 を仮の「今日」とする
+      
+      initApp();
+    });
+
+    function initApp() {
+      updateUI();
+    }
+
+    // UIの全更新
+    function updateUI() {
+      // 1. ダッシュボードの更新
+      document.getElementById('db-balance').textContent = `¥${state.balance.toLocaleString()}`;
+      
+      // 勉強インセンティブ機能の表示・非表示
+      const dbStudyWidgets = document.getElementById('db-study-widgets');
+      if (state.studyRewardsEnabled) {
+        dbStudyWidgets.style.display = 'block';
+        const streak = calculateStreak();
+        document.getElementById('db-streak').textContent = `${streak}日連続`;
+        
+        // 今日の勉強状況の確認
+        const todayStr = getTodayString();
+        const loggedToday = state.studyLogs[todayStr] === true;
+        const rewardBtn = document.getElementById('btn-db-study-log');
+        const rewardStatus = document.getElementById('db-reward-status');
+        
+        if (loggedToday) {
+          rewardBtn.classList.add('opacity-50', 'pointer-events-none');
+          rewardBtn.innerHTML = `<span class="material-symbols-outlined text-sm">check_circle</span>今日の勉強は記録済み！`;
+          rewardStatus.textContent = `今日のインセンティブを獲得しました (+10円)`;
+        } else {
+          rewardBtn.classList.remove('opacity-50', 'pointer-events-none');
+          rewardBtn.innerHTML = `<span class="material-symbols-outlined text-sm">bolt</span>今日の勉強を記録して +10円`;
+          rewardStatus.textContent = `今日のインセンティブが獲得可能です`;
+        }
+      } else {
+        dbStudyWidgets.style.display = 'none';
+      }
+
+      // ダッシュボード履歴の描画
+      renderDashboardTransactions();
+
+      // 2. カレンダーの更新
+      renderCalendar();
+
+      // 3. 分析画面の更新
+      renderStats();
+
+      // 4. 設定画面の更新
+      document.getElementById('settings-username').textContent = `@${state.profile.name}`;
+      document.getElementById('settings-joined').textContent = `${state.profile.joined}から開始`;
+      document.getElementById('allowance-input').value = state.baseAllowance;
+      document.getElementById('toggle-study-reward').checked = state.studyRewardsEnabled;
+    }
+
+    // 今日（シミュレーション上の今日：2024年10月10日）の日付文字列を取得
+    function getTodayString() {
+      return "2024-10-10";
+    }
+
+    // 継続日数の計算
+    function calculateStreak() {
+      // 2024-10-10 から遡って連続して true になっている日数をカウント
+      let streak = 0;
+      let checkDate = new Date(2024, 9, 10); // 2024-10-10
+
+      // 今日チェックされている場合はそこから、そうでない場合は昨日（10-09）からカウント開始
+      const todayStr = getTodayString();
+      if (!state.studyLogs[todayStr]) {
+        // 今日は未記録の場合、昨日チェックがあれば継続中とみなす
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+
+      while (true) {
+        const y = checkDate.getFullYear();
+        const m = String(checkDate.getMonth() + 1).padStart(2, '0');
+        const d = String(checkDate.getDate()).padStart(2, '0');
+        const dateStr = `${y}-${m}-${d}`;
+
+        if (state.studyLogs[dateStr] === true) {
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+      return streak;
+    }
+
+    // ダッシュボード取引履歴の描画
+    function renderDashboardTransactions() {
+      const listContainer = document.getElementById('db-transaction-list');
+      listContainer.innerHTML = '';
+
+      if (state.transactions.length === 0) {
+        listContainer.innerHTML = `
+          <div class="text-center py-8 text-muted text-xs">
+            <span class="material-symbols-outlined text-3xl mb-2">radar</span>
+            <p>履歴がありません。<br>右下のボタンから記録を追加しよう！</p>
+          </div>
+        `;
+        return;
+      }
+
+      // タイムスタンプ降順でソート
+      const sortedTxs = [...state.transactions].sort((a, b) => b.timestamp - a.timestamp);
+
+      sortedTxs.slice(0, 10).forEach(tx => {
+        const item = document.createElement('div');
+        item.className = "bg-surface rounded-md p-4 flex items-center justify-between border border-white/5 hover:border-white/10 transition-colors";
+        
+        let colorClass = "text-danger bg-danger/10";
+        let sign = "-";
+        
+        if (tx.type === 'income') {
+          colorClass = "text-primary bg-primary/10";
+          sign = "+";
+        } else if (tx.type === 'reward') {
+          colorClass = "text-accent bg-accent/10";
+          sign = "+";
+        }
+
+        item.innerHTML = `
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center ${colorClass}">
+              <span class="material-symbols-outlined text-lg">${tx.icon || 'payments'}</span>
+            </div>
+            <div>
+              <p class="font-bold text-[14px]">${tx.title}</p>
+              <p class="text-muted text-[11px]">${tx.category} • ${tx.date}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="font-display font-bold text-base ${tx.type === 'expense' ? 'text-danger' : tx.type === 'income' ? 'text-primary' : 'text-accent'}">
+              ${sign}¥${tx.amount.toLocaleString()}
+            </p>
+          </div>
+        `;
+        listContainer.appendChild(item);
+      });
+    }
+
+    // ==================== TAB SWITCHING ====================
+
+    function switchTab(tabName) {
+      // 画面の非表示・表示
+      document.getElementById('view-dashboard').classList.add('hidden');
+      document.getElementById('view-calendar').classList.add('hidden');
+      document.getElementById('view-stats').classList.add('hidden');
+      document.getElementById('view-settings').classList.add('hidden');
+
+      document.getElementById(`view-${tabName}`).classList.remove('hidden');
+
+      // ナビゲーションのハイライト切り替え
+      const tabs = ['dashboard', 'calendar', 'stats', 'settings'];
+      tabs.forEach(tab => {
+        const navLink = document.getElementById(`nav-${tab}`);
+        const icon = document.getElementById(`icon-${tab}`);
+        
+        if (tab === tabName) {
+          navLink.className = "flex flex-1 flex-col items-center justify-center gap-1 text-primary drop-shadow-[0_0_8px_rgba(0,240,181,0.4)]";
+          icon.style.fontVariationSettings = "'FILL' 1";
+        } else {
+          navLink.className = "flex flex-1 flex-col items-center justify-center gap-1 text-muted hover:text-text-main transition-colors";
+          icon.style.fontVariationSettings = "'FILL' 0";
+        }
+      });
+
+      // FABの表示・非表示 (DashboardのみFABを表示)
+      const fab = document.getElementById('btn-fab');
+      if (tabName === 'dashboard') {
+        fab.classList.remove('hidden');
+      } else {
+        fab.classList.add('hidden');
+      }
+
+      // UIの再読込
+      updateUI();
+    }
+
+    // ==================== STUDY CALENDAR LOGIC ====================
+
+    // カレンダーの描画
+    function renderCalendar() {
+      const monthsJapanese = [
+        "1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"
+      ];
+      const monthsEnglish = [
+        "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", 
+        "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
+      ];
+
+      // 月タイトルの更新
+      document.getElementById('cal-month-title').innerHTML = `
+        ${monthsEnglish[currentMonth]} ${currentYear} / <span class="text-primary font-bold">${monthsJapanese[currentMonth]}</span>
+      `;
+
+      // 統計情報の更新
+      const streak = calculateStreak();
+      document.getElementById('cal-streak').textContent = streak;
+
+      // この月の合計獲得インセンティブを計算
+      let earnedReward = 0;
+      Object.keys(state.studyLogs).forEach(dateStr => {
+        const logDate = new Date(dateStr);
+        if (logDate.getFullYear() === currentYear && logDate.getMonth() === currentMonth) {
+          if (state.studyLogs[dateStr] === true) {
+            earnedReward += 10;
+          }
+        }
+      });
+      document.getElementById('cal-earned').textContent = `¥${earnedReward.toLocaleString()}`;
+
+      // カレンダーグリッドの生成
+      const grid = document.getElementById('cal-grid');
+      grid.innerHTML = '';
+
+      // 月の最初の日と総日数
+      const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay(); // 0:日, 1:月...
+      const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+      // 先月の最終日
+      const prevTotalDays = new Date(currentYear, currentMonth, 0).getDate();
+
+      // 先月分の日付を埋める
+      for (let i = firstDayIndex - 1; i >= 0; i--) {
+        const cell = document.createElement('div');
+        cell.className = "aspect-square flex items-center justify-center text-muted/20 text-xs font-display";
+        cell.textContent = prevTotalDays - i;
+        grid.appendChild(cell);
+      }
+
+      // 当月分の日付を描画
+      const todayStr = getTodayString();
+      const todayDate = new Date(todayStr);
+
+      for (let day = 1; day <= totalDays; day++) {
+        const cellDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isLogged = state.studyLogs[cellDateStr] === true;
+        
+        // 今日かどうかの判定 (2024-10-10をシミュレーション上の今日とする)
+        const isToday = currentYear === 2024 && currentMonth === 9 && day === 10;
+
+        const cell = document.createElement('div');
+        cell.style.cursor = 'pointer';
+        cell.onclick = () => toggleStudyDate(cellDateStr);
+
+        let cellClass = "aspect-square flex flex-col items-center justify-center rounded-lg border text-sm font-display relative transition-all hover:border-primary/50 ";
+        
+        if (isToday) {
+          if (isLogged) {
+            cellClass += "bg-primary-container/10 border-primary shadow-glow-primary text-primary";
+          } else {
+            // 未完了の今日
+            cellClass += "bg-accent-purple/20 border-2 border-accent-purple shadow-glow-accent text-white font-bold";
+          }
+        } else if (isLogged) {
+          cellClass += "bg-primary-container/10 border-primary-container/30 text-primary";
+        } else {
+          cellClass += "border-white/5 text-muted hover:bg-white/5";
+        }
+
+        cell.className = cellClass;
+        
+        // 日付テキスト
+        const daySpan = document.createElement('span');
+        daySpan.textContent = day;
+        cell.appendChild(daySpan);
+
+        // チェックマーク (完了している日)
+        if (isLogged) {
+          const checkIcon = document.createElement('span');
+          checkIcon.className = "material-symbols-outlined absolute text-[10px] text-primary top-1 right-1";
+          checkIcon.style.fontVariationSettings = "'FILL' 1";
+          checkIcon.textContent = "check_circle";
+          cell.appendChild(checkIcon);
+        }
+
+        grid.appendChild(cell);
+      }
+
+      // 今日の勉強ログボタンの状態制御
+      const btnTodayLog = document.getElementById('btn-today-log');
+      const isTodayLogged = state.studyLogs[todayStr] === true;
+      if (isTodayLogged) {
+        btnTodayLog.classList.add('opacity-50', 'pointer-events-none');
+        btnTodayLog.innerHTML = `
+          <span class="material-symbols-outlined text-white text-xl">check_circle</span>
+          <span class="font-display text-white font-bold tracking-wider text-sm">今日の勉強は記録済み！</span>
+        `;
+      } else {
+        btnTodayLog.classList.remove('opacity-50', 'pointer-events-none');
+        btnTodayLog.innerHTML = `
+          <span class="material-symbols-outlined text-white text-xl" style="font-variation-settings: 'FILL' 1;">edit_calendar</span>
+          <span class="font-display text-white font-bold tracking-wider text-sm">今日の勉強を記録する (+10円)</span>
+        `;
+      }
+    }
+
+    // 月の変更
+    function changeMonth(direction) {
+      currentMonth += direction;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      } else if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      renderCalendar();
+    }
+
+    // カレンダーの日付タップ（10円増減ロジック！）
+    function toggleStudyDate(dateStr) {
+      if (!state.studyRewardsEnabled) return;
+
+      const wasLogged = state.studyLogs[dateStr] === true;
+      
+      // タップされたのが今日で、かつ未完了状態ならVerifiedModalを表示
+      const todayStr = getTodayString();
+      if (dateStr === todayStr && !wasLogged) {
+        triggerTodayStudyLog();
+        return;
+      }
+
+      // ハプティック風
+      triggerHaptic();
+
+      if (wasLogged) {
+        // チェックを外す: -10円
+        state.studyLogs[dateStr] = false;
+        state.balance -= 10;
+        
+        // 取引履歴から勉強ログを削除
+        state.transactions = state.transactions.filter(tx => tx.id !== `study-reward-${dateStr}`);
+      } else {
+        // チェックを入れる: +10円
+        state.studyLogs[dateStr] = true;
+        state.balance += 10;
+        
+        // 取引履歴に勉強ログを追加
+        const dateParts = dateStr.split('-');
+        const dateFormatted = `${parseInt(dateParts[1])}月${parseInt(dateParts[2])}日`;
+        
+        state.transactions.push({
+          id: `study-reward-${dateStr}`,
+          type: 'reward',
+          category: '勉強ごほうび',
+          icon: 'school',
+          title: `勉強ミッション報酬 (${dateFormatted})`,
+          amount: 10,
+          date: dateFormatted,
+          timestamp: new Date(dateStr + 'T18:00:00').getTime()
+        });
+      }
+
+      saveState();
+      updateUI();
+    }
+
+    // ダッシュボードの「勉強を記録して +10¥」から飛ぶ処理
+    function handleDbStudyLogClick() {
+      switchTab('calendar');
+      // 少しスクロール、または今日をログする処理を起動
+      setTimeout(() => {
+        triggerTodayStudyLog();
+      }, 200);
+    }
+
+    // 今日の勉強記録を開始（Verifiedモーダル表示）
+    function triggerTodayStudyLog() {
+      const todayStr = getTodayString();
+      const isAlreadyLogged = state.studyLogs[todayStr] === true;
+      if (isAlreadyLogged) return;
+
+      triggerHaptic();
+      
+      const modal = document.getElementById('modal-success');
+      modal.classList.remove('hidden');
+      
+      setTimeout(() => {
+        modal.classList.remove('pointer-events-none', 'opacity-0');
+        modal.querySelector('div:last-child').classList.remove('scale-90');
+        modal.querySelector('div:last-child').classList.add('scale-100');
+      }, 20);
+    }
+
+    // モーダルを閉じ、ご褒美画面へ進む
+    function closeSuccessModalAndShowReward() {
+      triggerHaptic();
+      
+      const modal = document.getElementById('modal-success');
+      modal.classList.add('pointer-events-none', 'opacity-0');
+      modal.querySelector('div:last-child').classList.add('scale-90');
+      modal.querySelector('div:last-child').classList.remove('scale-100');
+
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+
+      // 勉強チェック処理（今日の分をON）
+      const todayStr = getTodayString();
+      state.studyLogs[todayStr] = true;
+      state.balance += 10;
+
+      state.transactions.push({
+        id: `study-reward-${todayStr}`,
+        type: 'reward',
+        category: '勉強ごほうび',
+        icon: 'school',
+        title: `勉強ミッション報酬 (今日)`,
+        amount: 10,
+        date: '今日',
+        timestamp: Date.now()
+      });
+
+      saveState();
+      updateUI();
+
+      // ご褒美画面の表示とアニメーション開始
+      showRewardScreen();
+    }
+
+    // ==================== STUDY REWARD COIN ANIMATION ====================
+
+    let canvasAnimId = null;
+    let particles = [];
+    let canvasWidth, canvasHeight;
+
+    function showRewardScreen() {
+      const screen = document.getElementById('screen-reward');
+      screen.classList.remove('hidden');
+      
+      // 継続日数の表示更新
+      const streak = calculateStreak();
+      document.getElementById('reward-streak-sub').textContent = `勉強がんばり継続: ${streak}日間`;
+
+      // アニメーション初期化
+      initCoinAnimation();
+    }
+
+    function closeRewardScreen() {
+      triggerHaptic();
+      
+      // アニメーション停止
+      if (canvasAnimId) {
+        cancelAnimationFrame(canvasAnimId);
+        canvasAnimId = null;
+      }
+
+      const screen = document.getElementById('screen-reward');
+      screen.classList.add('hidden');
+
+      // カレンダー画面に遷移
+      switchTab('calendar');
+    }
+
+    function initCoinAnimation() {
+      const canvas = document.getElementById('reward-canvas');
+      const ctx = canvas.getContext('2d');
+
+      function resize() {
+        canvasWidth = window.innerWidth;
+        canvasHeight = window.innerHeight;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+      }
+      
+      window.addEventListener('resize', resize);
+      resize();
+
+      const coinColors = ['#00F0B5', '#B68DFF'];
+
+      class Coin {
+        constructor() {
+          this.reset(true);
+        }
+
+        reset(initial = false) {
+          this.x = Math.random() * canvasWidth;
+          this.y = initial ? (Math.random() * -canvasHeight) : -40;
+          this.z = Math.random() * 0.4 + 0.6; // 3D奥行き
+
+          this.vx = (Math.random() - 0.5) * 3;
+          this.vy = (Math.random() * 2) + 2;
+
+          this.color = coinColors[Math.floor(Math.random() * coinColors.length)];
+          this.rotation = Math.random() * Math.PI * 2;
+          this.rotationSpeed = (Math.random() - 0.5) * 0.15;
+          this.size = (Math.random() * 14 + 11) * this.z;
+          this.bounceCount = 0;
+          this.maxBounces = Math.floor(Math.random() * 3) + 1;
+          this.gravity = 0.35 * this.z;
+          this.friction = 0.98;
+        }
+
+        update() {
+          this.vy += this.gravity;
+          this.vx *= this.friction;
+          this.x += this.vx;
+          this.y += this.vy;
+          this.rotation += this.rotationSpeed;
+
+          // 床跳ね返り
+          if (this.y > canvasHeight - this.size) {
+            this.y = canvasHeight - this.size;
+            this.vy *= -0.58;
+            this.vx *= 0.8;
+            this.bounceCount++;
+
+            if (this.bounceCount === 1) {
+              triggerLightHaptic();
+            }
+
+            if (this.bounceCount > this.maxBounces) {
+              this.reset();
+            }
+          }
+
+          // 画面外（左右）での折り返し
+          if (this.x < 0 || this.x > canvasWidth) {
+            this.vx *= -1;
+          }
+        }
+
+        draw(ctx) {
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.rotation);
+
+          // 3Dコイン風
+          const scaleX = Math.abs(Math.sin(this.rotation));
+          ctx.scale(scaleX, 1);
+
+          // グロー
+          ctx.shadowBlur = 12 * this.z;
+          ctx.shadowColor = this.color;
+
+          ctx.beginPath();
+          ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.fill();
+
+          // インナーデザイン
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#0F0F16';
+          ctx.beginPath();
+          ctx.arc(0, 0, this.size * 0.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        }
+      }
+
+      particles = [];
+      for (let i = 0; i < 35; i++) {
+        particles.push(new Coin());
+      }
+
+      function loop() {
+        ctx.fillStyle = 'rgba(15, 35, 30, 0.25)'; // 微かなブレ
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+        particles.forEach(p => {
+          p.update();
+          p.draw(ctx);
+        });
+
+        canvasAnimId = requestAnimationFrame(loop);
+      }
+
+      loop();
+    }
+
+    // ==================== MANUAL TRANSACTION ADD MODAL ====================
+
+    let addTxAmount = "0";
+
+    function openAddTransactionModal() {
+      triggerHaptic();
+      
+      const modal = document.getElementById('modal-add-transaction');
+      modal.classList.remove('hidden');
+      
+      setTimeout(() => {
+        modal.classList.remove('pointer-events-none', 'opacity-0');
+        const slide = document.getElementById('add-tx-slide-container');
+        slide.classList.add('active');
+      }, 20);
+
+      // 初期値リセット
+      addTxAmount = "0";
+      document.getElementById('add-tx-amount-display').textContent = "0";
+      
+      // デフォルトは支出
+      document.querySelector('input[name="txType"][value="expense"]').checked = true;
+      updateAddTxColors();
+    }
+
+    function closeAddTransactionModal() {
+      const slide = document.getElementById('add-tx-slide-container');
+      slide.classList.remove('active');
+
+      const modal = document.getElementById('modal-add-transaction');
+      modal.classList.add('pointer-events-none', 'opacity-0');
+
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    function updateAddTxColors() {
+      const isExpense = document.querySelector('input[name="txType"][value="expense"]').checked;
+      const indicator = document.getElementById('toggle-indicator');
+      const amountDisplay = document.getElementById('add-tx-amount-display');
+      const symbol = document.getElementById('add-tx-currency-symbol');
+      const saveBtn = document.getElementById('btn-save-tx');
+
+      // カテゴリーの再生成
+      renderAddTxCategories(isExpense);
+
+      if (isExpense) {
+        indicator.style.transform = 'translateX(0)';
+        indicator.className = "absolute top-1 bottom-1 w-[calc(50%-4px)] bg-danger rounded-full transition-all duration-300 left-1 shadow-glow-danger";
+        amountDisplay.className = "text-[52px] leading-none font-display font-bold text-danger tracking-tighter shadow-sm drop-shadow-[0_0_8px_rgba(255,66,129,0.3)]";
+        symbol.className = "text-2xl font-display text-danger transition-colors duration-300";
+        saveBtn.className = "w-full h-13 rounded-full bg-danger text-white font-display font-bold tracking-widest uppercase shadow-glow-danger transition-all duration-300 text-sm active:scale-98";
+      } else {
+        indicator.style.transform = 'translateX(calc(100% + 0px))';
+        indicator.className = "absolute top-1 bottom-1 w-[calc(50%-4px)] bg-primary rounded-full transition-all duration-300 left-1 shadow-glow-primary";
+        amountDisplay.className = "text-[52px] leading-none font-display font-bold text-primary tracking-tighter shadow-sm drop-shadow-[0_0_8px_rgba(0,240,181,0.3)]";
+        symbol.className = "text-2xl font-display text-primary transition-colors duration-300";
+        saveBtn.className = "w-full h-13 rounded-full bg-primary text-background font-display font-bold tracking-widest uppercase shadow-glow-primary transition-all duration-300 text-sm active:scale-98";
+      }
+    }
+
+    const expenseCategories = [
+      { name: "たべもの", icon: "fastfood" },
+      { name: "ゲーム", icon: "sports_esports" },
+      { name: "ぶんぼうぐ", icon: "edit" },
+      { name: "マンガ", icon: "book" },
+      { name: "その他", icon: "payments" }
+    ];
+
+    const incomeCategories = [
+      { name: "お小遣い", icon: "payments" },
+      { name: "おてつだい", icon: "handshake" },
+      { name: "お年玉・お祝い", icon: "featured_seasonal_and_gifts" },
+      { name: "その他", icon: "add_circle" }
+    ];
+
+    let selectedCategoryName = "";
+
+    function renderAddTxCategories(isExpense) {
+      const container = document.getElementById('category-container');
+      container.innerHTML = '';
+
+      const cats = isExpense ? expenseCategories : incomeCategories;
+      selectedCategoryName = cats[0].name; // デフォルトで最初の項目を選択
+
+      cats.forEach((cat, index) => {
+        const btn = document.createElement('button');
+        
+        let activeClass = "border-primary text-background bg-primary shadow-glow-primary";
+        let inactiveClass = "border-white/10 bg-surface text-text-main hover:border-white/20";
+        
+        const isSelected = index === 0;
+
+        btn.className = `category-btn whitespace-nowrap px-4 py-2.5 rounded-full border text-xs font-semibold transition-all ${isSelected ? activeClass : inactiveClass}`;
+        btn.innerHTML = `<span class="align-middle">${cat.name}</span>`;
+        btn.onclick = () => {
+          triggerHaptic();
+          document.querySelectorAll('.category-btn').forEach(b => {
+            b.className = `category-btn whitespace-nowrap px-4 py-2.5 rounded-full border text-xs font-semibold transition-all ${inactiveClass}`;
+          });
+          btn.className = `category-btn whitespace-nowrap px-4 py-2.5 rounded-full border text-xs font-semibold transition-all ${activeClass}`;
+          selectedCategoryName = cat.name;
+        };
+
+        container.appendChild(btn);
+      });
+    }
+
+    function appendAddTxNumber(num) {
+      triggerHaptic();
+
+      if (addTxAmount === "0" && num !== ".") {
+        addTxAmount = num;
+      } else {
+        if (num === "." && addTxAmount.includes(".")) return;
+        if (addTxAmount.length < 7) {
+          addTxAmount += num;
+        }
+      }
+
+      document.getElementById('add-tx-amount-display').textContent = formatTxAmountString(addTxAmount);
+    }
+
+    function backspaceAddTx() {
+      triggerHaptic();
+
+      if (addTxAmount.length > 1) {
+        addTxAmount = addTxAmount.slice(0, -1);
+      } else {
+        addTxAmount = "0";
+      }
+
+      document.getElementById('add-tx-amount-display').textContent = formatTxAmountString(addTxAmount);
+    }
+
+    function formatTxAmountString(numStr) {
+      if (numStr === "") return "0";
+      const parts = numStr.split('.');
+      parts[0] = parseInt(parts[0], 10).toLocaleString('ja-JP');
+      return parts.join('.');
+    }
+
+    // 取引を保存
+    function saveNewTransaction() {
+      const amount = parseFloat(addTxAmount);
+      if (amount <= 0 || isNaN(amount)) {
+        alert("有効な金額を入力してね！");
+        return;
+      }
+
+      triggerHaptic();
+
+      const isExpense = document.querySelector('input[name="txType"][value="expense"]').checked;
+      const type = isExpense ? 'expense' : 'income';
+
+      // 残高の増減
+      if (isExpense) {
+        state.balance -= amount;
+      } else {
+        state.balance += amount;
+      }
+
+      // カテゴリーのアイコン特定
+      const cats = isExpense ? expenseCategories : incomeCategories;
+      const matchingCat = cats.find(c => c.name === selectedCategoryName) || cats[0];
+
+      // 今日追加のログ日時
+      const now = new Date();
+      const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const dateStr = `今日, ${timeStr}`;
+
+      // 取引を配列の先頭に追加
+      state.transactions.unshift({
+        id: `tx-${Date.now()}`,
+        type: type,
+        category: selectedCategoryName,
+        icon: matchingCat.icon,
+        title: selectedCategoryName + (isExpense ? 'のしゅっぴ' : 'のしゅうにゅう'),
+        amount: amount,
+        date: dateStr,
+        timestamp: Date.now()
+      });
+
+      saveState();
+      updateUI();
+      closeAddTransactionModal();
+    }
+
+    // ==================== STATS / ANALYTICS LOGIC ====================
+
+    // 分析画面の描画
+    function renderStats() {
+      const monthsJapanese = [
+        "1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"
+      ];
+      const monthsEnglish = [
+        "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", 
+        "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
+      ];
+
+      // タイトル更新
+      document.getElementById('stats-month-title').innerHTML = `
+        ${monthsEnglish[statsMonth]} / <span class="text-accent font-bold">${monthsJapanese[statsMonth]}</span>
+      `;
+
+      // 選択した月の支出を集計
+      let totalSpent = 0;
+      const catTotals = {};
+
+      state.transactions.forEach(tx => {
+        if (tx.type === 'expense') {
+          const txDate = new Date(tx.timestamp);
+          if (txDate.getFullYear() === statsYear && txDate.getMonth() === statsMonth) {
+            totalSpent += tx.amount;
+            catTotals[tx.category] = (catTotals[tx.category] || 0) + tx.amount;
+          }
+        }
+      });
+
+      document.getElementById('stats-total-spent').textContent = `¥${totalSpent.toLocaleString()}`;
+
+      // 円グラフ & カテゴリーリストの描画
+      const donutContainer = document.getElementById('donut-segments-container');
+      const catListContainer = document.getElementById('stats-category-list');
+      
+      donutContainer.innerHTML = '';
+      catListContainer.innerHTML = '';
+
+      if (totalSpent === 0) {
+        // 空の状態
+        donutContainer.innerHTML = `
+          <circle cx="150" cy="150" fill="transparent" r="120" stroke="#1A1A24" stroke-width="26"></circle>
+        `;
+        catListContainer.innerHTML = `
+          <div class="text-center py-10 text-muted text-xs">
+            <span class="material-symbols-outlined text-3xl mb-2">radar</span>
+            <p>この月の支出データがありません。</p>
+          </div>
+        `;
+        return;
+      }
+
+      // 各カテゴリーの比率と色コードの割り当て
+      // 色の定義: Food (Danger/Pink) = #FF4281, Games (Accent/Purple) = #B68DFF, Stationery/その他 = #00F0B5
+      const categoryColors = {
+        "たべもの": "#FF4281",
+        "ゲーム": "#B68DFF",
+        "ぶんぼうぐ": "#ffeecf", // tertiary
+        "マンガ": "#00F0B5",
+        "その他": "#00F0B5"
+      };
+
+      const categoryIcons = {
+        "たべもの": "restaurant",
+        "ゲーム": "sports_esports",
+        "ぶんぼうぐ": "edit",
+        "マンガ": "book",
+        "その他": "payments"
+      };
+
+      const sortedCats = Object.keys(catTotals).map(catName => {
+        return {
+          name: catName,
+          amount: catTotals[catName],
+          percent: Math.round((catTotals[catName] / totalSpent) * 100),
+          color: categoryColors[catName] || "#00F0B5",
+          icon: categoryIcons[catName] || "payments"
+        };
+      }).sort((a, b) => b.amount - a.amount);
+
+      // ドーナツセグメントの描画
+      // 周囲 = 2 * PI * 120 = ~753.98 (754とする)
+      let offsetAccumulator = 0;
+      
+      sortedCats.forEach(cat => {
+        const strokeLength = (cat.percent / 100) * 754;
+        const strokeOffset = -offsetAccumulator;
+        offsetAccumulator += strokeLength;
+
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("class", "donut-segment animate-sweep transition-all duration-300");
+        circle.setAttribute("cx", "150");
+        circle.setAttribute("cy", "150");
+        circle.setAttribute("fill", "transparent");
+        circle.setAttribute("r", "120");
+        circle.setAttribute("stroke", cat.color);
+        circle.setAttribute("stroke-width", "26");
+        circle.setAttribute("stroke-dasharray", `${strokeLength} 754`);
+        circle.style.setProperty("--dash-offset", `${strokeOffset}`);
+        
+        // グロー効果
+        circle.setAttribute("style", `filter: drop-shadow(0 0 6px ${cat.color}aa)`);
+
+        donutContainer.appendChild(circle);
+
+        // カテゴリーリストのアイテム生成
+        const item = document.createElement('div');
+        item.className = "relative bg-surface rounded-lg overflow-hidden group hover:shadow-glow-accent transition-shadow cursor-pointer";
+        
+        // 色別の微細グロー背景バー
+        const overlayColor = cat.color === '#FF4281' ? 'rgba(255, 66, 129, 0.12)' : cat.color === '#B68DFF' ? 'rgba(182, 141, 255, 0.12)' : 'rgba(0, 240, 181, 0.12)';
+
+        item.innerHTML = `
+          <!-- 背景進捗バー -->
+          <div class="absolute top-0 left-0 h-full animate-fill" style="width: ${cat.percent}%; background-color: ${overlayColor};"></div>
+          <div class="relative flex items-center p-4 z-10">
+            <div class="bg-background/80 p-2 rounded-md mr-4 text-white" style="color: ${cat.color}; border: 1px solid ${cat.color}33;">
+              <span class="material-symbols-outlined block text-base">${cat.icon}</span>
+            </div>
+            <div class="flex-1">
+              <div class="flex justify-between items-end mb-1">
+                <span class="font-bold text-xs">${cat.name}</span>
+                <span class="font-display font-bold text-sm" style="color: ${cat.color}">¥${cat.amount.toLocaleString()}</span>
+              </div>
+              <div class="flex justify-between text-[10px] text-muted">
+                <span>${cat.percent}%</span>
+                <span>${state.transactions.filter(t => t.category === cat.name && t.type === 'expense' && (new Date(t.timestamp).getMonth()) === statsMonth).length}回</span>
+              </div>
+            </div>
+          </div>
+        `;
+        catListContainer.appendChild(item);
+      });
+    }
+
+    function changeStatsMonth(direction) {
+      statsMonth += direction;
+      if (statsMonth > 11) {
+        statsMonth = 0;
+        statsYear++;
+      } else if (statsMonth < 0) {
+        statsMonth = 11;
+        statsYear--;
+      }
+      renderStats();
+    }
+
+    // ==================== SETTINGS & CONFIG LOGIC ====================
+
+    // お小遣い基本額の変更
+    function handleAllowanceChange(val) {
+      const allowance = parseFloat(val);
+      if (allowance >= 0 && !isNaN(allowance)) {
+        state.baseAllowance = allowance;
+        saveState();
+        triggerLightHaptic();
+      }
+    }
+
+    // お小遣いの手動付与
+    function manuallyTriggerAllowance() {
+      triggerHaptic();
+      state.balance += state.baseAllowance;
+      
+      state.transactions.unshift({
+        id: `allowance-${Date.now()}`,
+        type: 'income',
+        category: 'お小遣い',
+        icon: 'payments',
+        title: 'お小遣いチャージ（手動）',
+        amount: state.baseAllowance,
+        date: '今日',
+        timestamp: Date.now()
+      });
+
+      saveState();
+      updateUI();
+      alert(`お財布に ¥${state.baseAllowance.toLocaleString()} をチャージしたよ！`);
+    }
+
+    // 勉強リワード機能のON/OFF
+    function handleStudyRewardToggle(enabled) {
+      triggerLightHaptic();
+      state.studyRewardsEnabled = enabled;
+      saveState();
+      updateUI();
+    }
+
+    // アプリデータのリセット
+    function resetAppData() {
+      triggerHaptic();
+      if (confirm("お小遣い帳の全てのデータと勉強記録を消去して、最初に戻す？（この操作は取り消せません）")) {
+        localStorage.removeItem('cyber_pastel_pocket_money_state');
+        state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        saveState();
+        updateUI();
+        switchTab('dashboard');
+        alert("データをリセットしたよ。");
+      }
+    }
+
+    // ==================== HELPER UTILITIES ====================
+
+    // ハプティック（振動）シミュレーション
+    function triggerHaptic() {
+      if (navigator.vibrate) {
+        try { navigator.vibrate(40); } catch(e) {}
+      }
+    }
+
+    function triggerLightHaptic() {
+      if (navigator.vibrate) {
+        try { navigator.vibrate(10); } catch(e) {}
+      }
+    }
+  </script>
+</body>
+</html>
